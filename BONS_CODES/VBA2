@@ -1,0 +1,78 @@
+import os
+import logging
+import win32com.client as win32
+from tqdm import tqdm  # Biblioteca para barra de progresso
+
+# Caminho raiz para busca de arquivos e para salvar os logs
+RAIZ_CAMINHO = r'C:\BASE-TESTE'
+LOG_CAMINHO = os.path.join(RAIZ_CAMINHO, 'logderede')  # Pasta para salvar os logs
+
+if not os.path.exists(LOG_CAMINHO):
+    os.makedirs(LOG_CAMINHO)
+
+# Configuração do log
+logging.basicConfig(
+    filename=os.path.join(LOG_CAMINHO, 'log_vinculos.txt'),
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+# Função para atualizar vínculos no Excel usando VBA
+def atualizar_vinculos_excel(caminho_arquivo):
+    try:
+        # Iniciar o Excel de forma invisível
+        excel = win32.Dispatch('Excel.Application')
+        excel.Visible = False  # Não exibe o Excel
+
+        # Abrir o arquivo Excel
+        workbook = excel.Workbooks.Open(caminho_arquivo)
+
+        # Definir os caminhos antigo e novo
+        caminho_antigo_parcial = r"C:\Users\brunolysik\AppData\Roaming\Microsoft\Excel\XLSTART\ADM\FINANCEIRO\CONTROLES INTERNOS"
+        caminho_novo_parcial = r"C:\AGRO-DADOS\OneDrive - AGROCONSULT PARTICIPACOES LTDA\COMUNICA - VBA"
+
+        # Obter os vínculos do arquivo
+        links = workbook.LinkSources(1)  # 1 indica links do tipo ExcelLinks
+        if links:
+            contador = 0
+            for link in links:
+                if caminho_antigo_parcial in link:
+                    novo_link = link.replace(caminho_antigo_parcial, caminho_novo_parcial)
+                    workbook.ChangeLink(link, novo_link, 1)  # 1 é para ExcelLinks
+                    contador += 1
+            if contador > 0:
+                logging.info(f"Arquivo {caminho_arquivo} - {contador} vínculo(s) atualizado(s) com sucesso.")
+            else:
+                logging.info(f"Arquivo {caminho_arquivo} - Nenhum vínculo encontrado para atualização.")
+        else:
+            logging.info(f"Arquivo {caminho_arquivo} - Nenhum vínculo Excel encontrado.")
+
+        # Salvar e fechar o arquivo
+        workbook.Save()
+        workbook.Close()
+        excel.Quit()
+
+    except Exception as e:
+        logging.error(f"Erro ao processar {caminho_arquivo}: {str(e)}")
+        if 'excel' in locals():
+            excel.Quit()
+
+# Função para percorrer todas as subpastas e listar arquivos Excel
+def listar_arquivos_excel(caminho_inicial):
+    arquivos = []
+    for root, dirs, files in os.walk(caminho_inicial):
+        for file in files:
+            if file.endswith(('.xls', '.xlsx', '.xlsm')):  # Extensões de Excel
+                arquivos.append(os.path.join(root, file))
+    return arquivos
+
+# --- PROCESSO PRINCIPAL ---
+
+# Lista todos os arquivos Excel
+arquivos_excel = listar_arquivos_excel(RAIZ_CAMINHO)
+
+# Processa os arquivos com barra de progresso
+for caminho_arquivo in tqdm(arquivos_excel, desc="Processando arquivos", unit="arquivo"):
+    atualizar_vinculos_excel(caminho_arquivo)
+
+print("Processamento concluído!")

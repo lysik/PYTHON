@@ -1,0 +1,109 @@
+
+''' 
+import os
+import logging
+import win32com.client as win32
+from tqdm import tqdm  # Biblioteca para barra de progresso
+
+# Caminho raiz para busca de arquivos e para salvar os logs
+RAIZ_CAMINHO = r'C:\BASE-TESTE'
+LOG_CAMINHO = os.path.join(RAIZ_CAMINHO, 'logderede')  # Pasta para salvar os logs
+if not os.path.exists(LOG_CAMINHO):
+    os.makedirs(LOG_CAMINHO)
+
+# Configuração do log
+logging.basicConfig(filename=os.path.join(LOG_CAMINHO, 'log_vinculos.txt'), level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Função para atualizar vínculos no Excel usando VBA
+def atualizar_vinculos_excel(caminho_arquivo):
+    try:
+        # Iniciar o Excel de forma invisível
+        excel = win32.Dispatch('Excel.Application')
+        excel.Visible = False  # Não exibe o Excel
+
+        # Abrir o arquivo Excel
+        ##wb = excel.Workbooks.Open(caminho_arquivo)
+         workbook = excel.Workbooks.Open(caminho_arquivo)
+        
+
+        # Definir os caminhos antigo e novo (como no seu código VBA)
+        caminho_antigo_parcial = r"C:\Users\brunolysik\AppData\Roaming\Microsoft\Excel\XLSTART\ADM\FINANCEIRO\CONTROLES INTERNOS"
+        caminho_novo_parcial = r"C:\AGRO-DADOS\OneDrive - AGROCONSULT PARTICIPACOES LTDA\COMUNICA - VBA"
+
+        # Obter os vínculos do arquivo
+        links = wb.LinkSources(1)  # 1 indica links do tipo ExcelLinks
+        if links:
+            contador = 0
+            for link in links:
+                if caminho_antigo_parcial in link:
+                    novo_link = link.replace(caminho_antigo_parcial, caminho_novo_parcial)
+                    wb.ChangeLink(link, novo_link, 1)  # 1 é para ExcelLinks
+                    contador += 1
+            if contador > 0:
+                logging.info(f"Arquivo {caminho_arquivo} - {contador} vínculo(s) atualizado(s) com sucesso.")
+            else:
+                logging.info(f"Arquivo {caminho_arquivo} - Nenhum vínculo encontrado para atualização.")
+        else:
+            logging.info(f"Arquivo {caminho_arquivo} - Nenhum vínculo Excel encontrado.")
+
+        # Fechar o arquivo sem salvar alterações (já que as alterações são salvas diretamente)
+        ##workbook.Close(SaveChanges=True)
+        workbook.Save()
+        workbook.Close()
+
+        # Fechar o Excel
+        excel.Quit()
+
+ # Loga o sucesso
+        logging.info(f'Arquivo processado com sucesso: {arquivo}')
+
+    except Exception as e:
+        logging.error(f"Erro ao processar {caminho_arquivo}: {str(e)}")
+
+ # Finaliza o Excel mesmo após erro para evitar instâncias abertas
+        if 'excel' in locals():
+            excel.Quit()
+
+# Função para percorrer todas as subpastas e arquivos
+#def percorrer_pastas_e_atualizar_vinculos(caminho_raiz):
+    #for root, dirs, files in os.walk(caminho_raiz):
+        #for file in files:
+           # if file.endswith(('.xls', '.xlsx', '.xlsm')):  # Identificar arquivos Excel
+               # caminho_arquivo = os.path.join(root, file)
+                #atualizar_vinculos_excel(caminho_arquivo)
+
+##def percorrer_pastas_e_atualizar_vinculos(caminho_raiz):
+  ##  arquivos = []
+  ##  for root, dirs, files in os.walk(caminho_raiz):
+    ##    for file in files:
+      ##      if file.endswith(('.xls', '.xlsx', '.xlsm')):  # Identificar arquivos Excel
+         ##       arquivos.append(os.path.join(root, file))
+
+
+def percorrer_diretorios(caminho_inicial):
+    # Percorre todos os diretórios e arquivos
+    for root, dirs, files in os.walk(caminho_inicial):
+        for file in files:
+            if file.endswith(('.xls', '.xlsx', '.xlsm')):  # Verifica se é um arquivo Excel
+                arquivo = os.path.join(root, file)
+                alterar_vinculos_excel(arquivo)
+
+# Caminho inicial onde os arquivos Excel estão localizados
+caminho_inicial = r'C:\BASE-TESTE'
+
+
+
+ # Barra de progresso com o número total de arquivos
+for i, caminho_arquivo in enumerate(tqdm(arquivos, desc="Processando arquivos", unit="arquivo")):
+        atualizar_vinculos_excel(caminho_arquivo)
+
+
+# Iniciar o processo
+##if __name__ == "__main__":
+  ##  percorrer_pastas_e_atualizar_vinculos(RAIZ_CAMINHO)
+
+
+# Inicia o processo
+percorrer_diretorios(caminho_inicial)
+ '''

@@ -1,0 +1,37 @@
+import pythoncom
+import win32com.client as win32
+
+# Caminho completo do arquivo Excel
+arquivo = r'C:\Users\Bruno\OneDrive - AGROCONSULT PARTICIPACOES LTDA\VINCULOS\COMUNICA - VBA\APURAÇÃO IRPJ E CSLL TRIMESTRAIS\2020\IRPJ CSLL PREVISÃO 4º TRIMESTRE 2020.xlsx'
+
+# Inicializa o COM para acesso ao Excel
+pythoncom.CoInitialize()
+
+# Inicia o Excel em segundo plano
+excel = win32.DispatchEx('Excel.Application')
+excel.Visible = True  # Pode deixar False depois de testar
+
+try:
+    # Tenta abrir o arquivo
+    wb = excel.Workbooks.Open(arquivo)
+
+    # Coleta os vínculos externos (se houver)
+    links = wb.LinkSources(1)  # 1 = ExcelLinks
+
+    if links:
+        print("Links encontrados:")
+        for link in links:
+            print(link)
+    else:
+        print("Nenhum link encontrado.")
+
+    # Fecha o arquivo sem salvar alterações
+    wb.Close(SaveChanges=False)
+
+except Exception as e:
+    print(f"Erro ao abrir ou processar o arquivo:\n{e}")
+
+finally:
+    # Encerra o Excel e o COM
+    excel.Quit()
+    pythoncom.CoUninitialize()
